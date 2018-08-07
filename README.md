@@ -1,2 +1,3 @@
-# flow123d-package
-A set of scripts which pack flow123d repository
+# Flow123d package
+
+This set of scripts will create install packages for the project Flow123d
