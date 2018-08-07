@@ -78,10 +78,9 @@ IF(IS_WINDOWS)
     INSTALL(PROGRAMS src/windows/mounts.sh                  DESTINATION bin/)
     
     # install configure
-    INSTALL(PROGRAMS ${FLOW123D_ROOT}/bin/fterm             DESTINATION bin
-                                                            RENAME configure)
-    INSTALL(DIRECTORY ${FLOW123D_ROOT}/config/docker/customize/.
-                                                            DESTINATION config/docker/customize)
+    INSTALL(PROGRAMS ${DEST}/bin/fterm                      DESTINATION bin
+                                                            RENAME      configure)
+    INSTALL(DIRECTORY ${DEST}/config/docker/customize/.     DESTINATION config/docker/customize)
     
     
     set(CPACK_PACKAGE_FILE_NAME "flow123d_${FLOW_VERSION}")
@@ -117,10 +116,9 @@ ELSE()
     INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/pack/runtest.sh    DESTINATION bin/)
     
     # install configure
-    INSTALL(PROGRAMS ${FLOW123D_ROOT}/bin/fterm             DESTINATION bin
-                                                            RENAME configure)
-    INSTALL(DIRECTORY ${FLOW123D_ROOT}/config/docker/customize/.
-                                                            DESTINATION config/docker/customize)
+    INSTALL(PROGRAMS ${DEST}/bin/fterm                      DESTINATION bin
+                                                            RENAME      configure)
+    INSTALL(DIRECTORY ${DEST}/config/docker/customize/.     DESTINATION config/docker/customize)
     
     
     SET(CPACK_PACKAGE_FILE_NAME "flow123d_${FLOW_VERSION}")

@@ -26,6 +26,9 @@ win_geomop_arch_name=$(base_name)_windows_geomop_install.zip
 current_date=$(shell date +"%d-%m-%Y %T")
 build_date=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+# path to the generated pdf
+pdf_location=doc/reference_manual/flow123d_doc.pdf
+
 #$(destination)/$(win_arch_name) $(destination)/$(lin_arch_name)$(destination)/$(win_geomop_arch_name)
 all: $(destination)/$(win_arch_name) $(destination)/$(win_geomop_arch_name) $(destination)/$(lin_arch_name)
 	echo $(destination)
@@ -40,6 +43,8 @@ remove-unwanted:
 	rm -rf $(destination)/$(docker_geomop_arch_name)
 	rm -rf $(destination)/tests
 	rm -rf $(destination)/doc
+	rm -rf $(destination)/config/docker/
+	rm -rf $(destination)/bin/
 	-@echo "Following files will be included in package: "
 	ls -la $(destination)
 
@@ -157,11 +162,16 @@ $(destination)/flow123d_$(flow_version)_doc.pdf:
 		
 		mkdir -p $(destination)/htmldoc
 		mkdir -p $(destination)/doxygen
+		mkdir -p $(destination)/config/docker/
+		mkdir -p $(destination)/bin/
 		
-		docker cp $(container_name):$(flow_repo_location)/build_tree/doc/reference_manual/flow123d_doc.pdf $(destination)/flow123d_$(flow_version)_doc.pdf
-		docker cp $(container_name):$(flow_repo_location)/build_tree/htmldoc/html/src/.                    $(destination)/htmldoc
-		docker cp $(container_name):$(flow_repo_location)/build_tree/doc/online-doc/flow123d/.             $(destination)/doxygen
-
+		docker cp $(container_name):$(flow_repo_location)/build_tree/$(pdf_location)             $(destination)/flow123d_$(flow_version)_doc.pdf
+		docker cp $(container_name):$(flow_repo_location)/build_tree/htmldoc/html/src/.          $(destination)/htmldoc
+		docker cp $(container_name):$(flow_repo_location)/build_tree/doc/online-doc/flow123d/.   $(destination)/doxygen
+		
+		docker cp $(container_name):$(flow_repo_location)/config/docker/customize/.              $(destination)/config/docker/customize
+		docker cp $(container_name):$(flow_repo_location)/bin/fterm                              $(destination)/bin/fterm
+		
 
 # will push the images to the hub
 # you must be logged in already in order to push the images to docker hub
