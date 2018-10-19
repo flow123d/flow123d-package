@@ -28,6 +28,7 @@ build_date=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # path to the generated pdf
 pdf_location=doc/reference_manual/flow123d_doc.pdf
+ist_location=doc/reference_manual/input_reference.json
 
 #$(destination)/$(win_arch_name) $(destination)/$(lin_arch_name)$(destination)/$(win_geomop_arch_name)
 all: $(destination)/$(win_arch_name) $(destination)/$(win_geomop_arch_name) $(destination)/$(lin_arch_name)
@@ -168,6 +169,7 @@ $(destination)/flow123d_$(flow_version)_doc.pdf:
 		docker cp $(container_name):$(flow_repo_location)/build_tree/$(pdf_location)             $(destination)/flow123d_$(flow_version)_doc.pdf
 		docker cp $(container_name):$(flow_repo_location)/build_tree/htmldoc/html/src/.          $(destination)/htmldoc
 		docker cp $(container_name):$(flow_repo_location)/build_tree/doc/online-doc/flow123d/.   $(destination)/doxygen
+		docker cp $(container_name):$(flow_repo_location)/$(ist_location)                        $(destination)/input_reference.json
 		
 		docker cp $(container_name):$(flow_repo_location)/config/docker/customize/.              $(destination)/config/docker/customize
 		docker cp $(container_name):$(flow_repo_location)/bin/fterm                              $(destination)/bin/fterm
