@@ -30,6 +30,21 @@ build_date=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 pdf_location=doc/reference_manual/flow123d_doc.pdf
 ist_location=doc/reference_manual/input_reference.json
 
+dexec=docker exec $(container_name)
+dcp=docker cp $(container_name)
+
+help:
+	@echo "usage: "
+	@echo "  all           packs entire flow"
+	@echo "  help          prints this message and additional info"
+	@echo "  push-to-hub   pushes docker images flow123d/$(flow_version) and flow123d/$(flow_version)-geomop to the docker hub"
+	@echo ""
+	@echo "current configuration"
+	@echo "  flow_version: $(flow_version)"
+	@echo "  destination:  $(destination)"
+	@echo "  git_hash:     $(git_hash)"
+	@echo "  git_branch:   $(git_branch)"
+
 #$(destination)/$(win_arch_name) $(destination)/$(lin_arch_name)$(destination)/$(win_geomop_arch_name)
 all: $(destination)/$(win_arch_name) $(destination)/$(win_geomop_arch_name) $(destination)/$(lin_arch_name)
 	echo $(destination)
@@ -38,7 +53,7 @@ all: $(destination)/$(win_arch_name) $(destination)/$(win_geomop_arch_name) $(de
 	echo $(git_branch)
 
 
-# removes unwatedn files before publishing to the flow.nti.tul.cz
+# removes unwanted files before publishing to the flow.nti.tul.cz
 remove-unwanted:
 	rm -rf $(destination)/$(docker_arch_name)
 	rm -rf $(destination)/$(docker_geomop_arch_name)
@@ -46,7 +61,7 @@ remove-unwanted:
 	rm -rf $(destination)/doc
 	rm -rf $(destination)/config/docker/
 	rm -rf $(destination)/bin/
-	-@echo "Following files will be included in package: "
+	@echo "Following files will be included in package: "
 	ls -la $(destination)
 
 
@@ -137,43 +152,39 @@ $(destination)/$(docker_arch_name): $(destination)/$(cmake_package_name)
 
 # create package from flow123d project
 $(destination)/$(cmake_package_name): $(destination)/tests $(destination)/flow123d_$(flow_version)_doc.pdf
-	docker exec $(container_name) make -C $(flow_repo_location) package
-	docker cp   $(container_name):$(flow_repo_location)/build_tree/$(cmake_package_name) $(destination)/$(cmake_package_name)
+	$(dexec) make -C $(flow_repo_location) package
+	$(dcp):$(flow_repo_location)/build_tree/$(cmake_package_name) $(destination)/$(cmake_package_name)
 
 # copy tests outside
 $(destination)/tests:
 	# create destination folders
 	mkdir -p    $(destination)/tests
 	# clean and copy tests folder
-	docker exec $(container_name) make -C $(flow_repo_location) clean-tests
-	docker cp   $(container_name):$(flow_repo_location)/tests/. $(destination)/tests
+	$(dexec) make -C $(flow_repo_location) clean-tests
+	$(dcp):$(flow_repo_location)/tests/. $(destination)/tests
 
 	# delete runtest because we will have to create other runtest for docker
-	rm -rf    $(destination)/tests/runtest
+	rm -rf $(destination)/tests/runtest
 
 
 # call ref doc if pdf was not already created
 $(destination)/flow123d_$(flow_version)_doc.pdf:
-	docker exec $(container_name) make -C $(flow_repo_location) all
-	docker exec $(container_name) ls $(flow_repo_location)/build_tree/doc/reference_manual/flow123d_doc.pdf || \
-    (echo "no such file, calling ref-doc" &&                                                                 \
-		docker exec $(container_name) make -C $(flow_repo_location) FORCE_DOC_UPDATE=1 ref-doc &&                \
-    docker exec $(container_name) make -C $(flow_repo_location) html-doc &&                                  \
-    docker exec $(container_name) make -C $(flow_repo_location) doxy-doc)
-		
-		mkdir -p $(destination)/htmldoc
-		mkdir -p $(destination)/doxygen
-		mkdir -p $(destination)/config/docker/
-		mkdir -p $(destination)/bin/
-		
-		docker cp $(container_name):$(flow_repo_location)/build_tree/$(pdf_location)             $(destination)/flow123d_$(flow_version)_doc.pdf
-		docker cp $(container_name):$(flow_repo_location)/build_tree/htmldoc/html/src/.          $(destination)/htmldoc
-		docker cp $(container_name):$(flow_repo_location)/build_tree/doc/online-doc/flow123d/.   $(destination)/doxygen
-		docker cp $(container_name):$(flow_repo_location)/$(ist_location)                        $(destination)/input_reference.json
-		
-		docker cp $(container_name):$(flow_repo_location)/config/docker/customize/.              $(destination)/config/docker/customize
-		docker cp $(container_name):$(flow_repo_location)/bin/fterm                              $(destination)/bin/fterm
-		
+	$(dexec) make -C $(flow_repo_location) all                          # compile just in case
+	$(dexec) make -C $(flow_repo_location) FORCE_DOC_UPDATE=1 ref-doc   # generate latex doc
+	$(dexec) make -C $(flow_repo_location) html-doc                     # generate html doc
+	$(dexec) make -C $(flow_repo_location) doxy-doc                     # generate source doc
+	
+	mkdir -p $(destination)/htmldoc
+	mkdir -p $(destination)/doxygen
+	mkdir -p $(destination)/config/docker/
+	mkdir -p $(destination)/bin/
+	
+	$(dcp):$(flow_repo_location)/build_tree/$(pdf_location)             $(destination)/flow123d_$(flow_version)_doc.pdf
+	$(dcp):$(flow_repo_location)/build_tree/htmldoc/html/src/.          $(destination)/htmldoc
+	$(dcp):$(flow_repo_location)/build_tree/doc/online-doc/flow123d/.   $(destination)/doxygen
+	$(dcp):$(flow_repo_location)/$(ist_location)                        $(destination)/input_reference.json
+	$(dcp):$(flow_repo_location)/bin/fterm                              $(destination)/bin/fterm
+	
 
 # will push the images to the hub
 # you must be logged in already in order to push the images to docker hub
