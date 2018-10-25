@@ -20,9 +20,7 @@ LABEL org.label-schema.build-date="$build_date" \
       org.label-schema.version="$flow_version" \
       org.label-schema.schema-version="1.0"
 
-USER root
 COPY ${cmake_package_name} /tmp/${cmake_package_name}
-COPY setup.sh /tmp/setup.sh
 
 RUN mkdir -p ${flow_install_location} \
  && tar -xzf /tmp/${cmake_package_name} \
@@ -30,13 +28,10 @@ RUN mkdir -p ${flow_install_location} \
     --strip-components=1 \
  && rm -rf /tmp/${cmake_package_name} \
  && rm -rf ${flow_install_location}/tests \
- && /tmp/setup.sh \
  && echo "${cmake_package_name} successfully inserted into image"
 
-USER 1000:1000
+# update PATH 
+ENV PATH="/opt/flow123d/bin:${PATH}"
 
-
-# when running container specify --login flag
-# this will automatically load bash.bashrc and profile files in /etc/
-CMD ["/bin/bash", "--login"]
- 
+# save the image version
+RUN echo $flow_version > /.dockerversion

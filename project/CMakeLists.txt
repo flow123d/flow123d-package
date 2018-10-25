@@ -28,7 +28,6 @@ IF(IS_WINDOWS)
     # docker toolbox variables
     SET(DOCKER_TOOLBOX_URL  "https://github.com/docker/toolbox/releases/download/v18.03.0-ce/DockerToolbox-18.03.0-ce.exe")
     SET(DOCKER_TOOLBOX_NAME "DockerToolbox-18.03.0-ce.exe")
-    SET(DOCKER_TOOLBOX_MD5  "a5ac596f6cabddf280b4d14318e24387")
     SET(DOCKER_TOOLBOX_PATH "${CMAKE_BINARY_DIR}/pack/${DOCKER_TOOLBOX_NAME}" CACHE STRING "Location of DockerToolbox")
     
     # prepare docker toolbox
@@ -36,7 +35,6 @@ IF(IS_WINDOWS)
         message(STATUS "Downloading ${DOCKER_TOOLBOX_NAME}")
         file(DOWNLOAD
           ${DOCKER_TOOLBOX_URL} ${DOCKER_TOOLBOX_PATH}
-          EXPECTED_HASH MD5=${DOCKER_TOOLBOX_MD5}
           SHOW_PROGRESS
         )
     endif()
@@ -80,8 +78,6 @@ IF(IS_WINDOWS)
     # install configure
     INSTALL(PROGRAMS ${DEST}/bin/fterm                      DESTINATION bin
                                                             RENAME      configure)
-    INSTALL(DIRECTORY ${DEST}/config/docker/customize/.     DESTINATION config/docker/customize)
-    
     
     set(CPACK_PACKAGE_FILE_NAME "flow123d_${FLOW_VERSION}")
     SET(CPACK_GENERATOR "ZIP")
@@ -118,8 +114,6 @@ ELSE()
     # install configure
     INSTALL(PROGRAMS ${DEST}/bin/fterm                      DESTINATION bin
                                                             RENAME      configure)
-    INSTALL(DIRECTORY ${DEST}/config/docker/customize/.     DESTINATION config/docker/customize)
-    
     
     SET(CPACK_PACKAGE_FILE_NAME "flow123d_${FLOW_VERSION}")
     SET(CPACK_GENERATOR "TGZ")
