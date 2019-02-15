@@ -1,0 +1,2 @@
+Copyright (C) 2019 Technical University of Liberec. All rights reserved.
+The software is distributed under Gnu Public License version 3.
