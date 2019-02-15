@@ -3,8 +3,7 @@
 
 container_name          ?= contrelease
 flow_install_location   ?= /opt/flow123d
-# flow_repo_location      ?= /opt/flow123d/flow123d
-flow_repo_location      ?= /home/jan-hybs/projects/flow123d/flow123d
+flow_repo_location      ?= /opt/flow123d/flow123d
 
 
 destination  ?= $(shell pwd)/publish
