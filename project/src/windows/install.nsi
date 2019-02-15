@@ -11,7 +11,7 @@
   # Name and file
   Name "Flow123d ${VERSION}"
   Caption "Flow123d ${VERSION} Setup"
-  OutFile "flow123d_${VERSION}_win_install.exe"
+  OutFile "flow123d_${VERSION}_windows_install.exe"
 
 
   # Admin access

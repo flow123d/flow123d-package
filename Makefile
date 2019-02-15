@@ -86,7 +86,7 @@ $(destination)/$(win_arch_name): $(destination)/$(docker_arch_name)
 	echo "$(flow_version)" > $(destination)/version
 
 	docker run -i --rm -u $(uid):$(gid) -v $(destination):/nsis-project hp41/nsis /nsis-project/install.nsi
-	echo "{\"build\": \"$(current_date)\", \"hash\": \"$(git_hash)\"}" > $(destination)/flow123d_$(flow_version)_win_install.json
+	echo "{\"build\": \"$(current_date)\", \"hash\": \"$(git_hash)\"}" > $(destination)/flow123d_$(flow_version)_windows_install.json
 
 
 # create docker image for linux users
