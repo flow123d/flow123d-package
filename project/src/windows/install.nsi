@@ -125,7 +125,12 @@ FunctionEnd
 
 
 Function REMOVE_OLD
-  nsExec::Exec '"powershell" -WindowStyle hidden -ExecutionPolicy RemoteSigned -File $INSTDIR\remove-docker-toolbox.ps1'
+  # remove Docker Toolbox env variables
+  DeleteRegValue HKCU "Environment" "DOCKER_CERT_PATH"
+  DeleteRegValue HKCU "Environment" "DOCKER_HOST"
+  DeleteRegValue HKCU "Environment" "DOCKER_MACHINE_NAME"
+  DeleteRegValue HKCU "Environment" "DOCKER_TLS_VERIFY"
+  DeleteRegValue HKCU "Environment" "DOCKER_TOOLBOX_INSTALL_PATH"
 FunctionEnd
 
 Function CHECK_DOCKER
