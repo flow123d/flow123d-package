@@ -90,20 +90,37 @@ Function COPY_FILES
 
   SetOutPath "$INSTDIR\doc"
   File /r "htmldoc"
-  File /r "flow123d_${VERSION}_doc.pdf"
+  File "flow123d_${VERSION}_doc.pdf"
 
   # install fterm.bat
   CreateDirectory "$INSTDIR\bin"
   SetOutPath "$INSTDIR\bin"
+
+  # fterm.bat serves as an interactive terminal for (mostly) debugging purposes
+  # or for more experience users
   FileOpen $0 "fterm.bat" w
     FileWrite $0 '@echo off$\r$\n'
-    FileWrite $0 'SET "cdir=\%CD:~0,1%\%CD:~3,256%"$\r$\n'
-    FileWrite $0 'docker run -ti --rm -v "%~d0\:/%CD:~0,1%/" -v "C:\:/c/" -w "%cdir:\=/%" flow123d/${VERSION} %*$\r$\n'
+    FileWrite $0 'SET cdir=\%CD:~0,1%\%CD:~3,256%$\r$\n'
+    FileWrite $0 'SET L=%CD:~0,1%$\r$\n'
+    FileWrite $0 'docker run -ti --rm -v "%L%:\:/%L%/" -v "c:\:/c/" -w "%cdir:\=/%" flow123d/${VERSION} %*$\r$\n'
     FileWrite $0 'pause$\r$\n'
   FileClose $0
 
-  # fterm with version
-  CopyFiles "fterm.bat" "f-${VERSION}.bat"
+  # flow123d.bat is wrapper which directly calls a binary inside a docker image
+  # flow123d.bat and flow123d (inside docker) are linked together, meaning when flow123d.bat is over
+  # it means the docker flow123d inside fihisned and container exited.
+  FileOpen $0 "flow123d.bat" w
+    FileWrite $0 '@echo off$\r$\n'
+    FileWrite $0 'SET cdir=\%CD:~0,1%\%CD:~3,256%$\r$\n'
+    FileWrite $0 'SET L=%CD:~0,1%$\r$\n'
+    FileWrite $0 'docker run -ti --rm -v "%L%:\:/%L%/" -v "c:\:/c/" -w "%cdir:\=/%" flow123d/${VERSION} flow123d %*$\r$\n'
+  FileClose $0
+
+  # fterm and flow123d with version
+  CopyFiles "fterm.bat"     "fterm-${VERSION}.bat"
+  CopyFiles "flow123d.bat"  "flow123d-${VERSION}.bat"
+  CopyFiles "flow123d.bat"  "flow.bat"
+  CopyFiles "flow123d.bat"  "flow-${VERSION}.bat"
 FunctionEnd
 
 
