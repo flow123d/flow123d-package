@@ -125,6 +125,18 @@ FunctionEnd
 
 
 Function REMOVE_OLD
+  # detect previous installation and warn user
+  ClearErrors
+  ReadRegStr $0 HKCU "Environment" "DOCKER_CERT_PATH"
+  ${If} ${Errors}
+    # MessageBox MB_OK "no Docker Toolbox found"
+  ${Else}
+    # Docker Toolbox found
+    MessageBox MB_OK "Detected previous installation of Docker Toolbox, you may need to restart your PC later on"
+    # do not set the flag for now
+    # SetRebootFlag true
+  ${EndIf}
+
   # remove Docker Toolbox env variables
   DeleteRegValue HKCU "Environment" "DOCKER_CERT_PATH"
   DeleteRegValue HKCU "Environment" "DOCKER_HOST"
