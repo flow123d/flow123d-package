@@ -1,48 +1,157 @@
-#!/bin/bash
-# Script will start docker
+#!/usr/bin/env bash
+#
+# This script downloads and runs flow123d
 
-CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# run docker shell within current dirrectory
-echo "- Home directory mounted to '$HOME'"
-if [ -f "$CWD/.inject.sh" ]; then
-    source "$CWD/.inject.sh"
+# check if stdout is a terminal...
+if [[ -z "$nocolor" ]]; then
+  if test -t 1; then
+      # see if it supports colors...
+      ncolors=$(tput colors)
+      if test -n "$ncolors" && test $ncolors -ge 8; then
+          bold="$(tput bold)"
+          reset="$(tput sgr0)"
+          red="$(tput setaf 1)"
+          green="$(tput setaf 2)"
+          yellow="$(tput setaf 3)"
+          blue="$(tput setaf 4)"
+          bblue="$bold$blue"
+          bgreen="$bold$green"
+          byellow="$bold$yellow"
+          bred="$bold$red"
+      fi
+  fi
 fi
 
-# grab user's id
-gid=$(id -g)
+function dbg() {
+  if [[ $verbose -eq 1 ]]; then
+    echo -e "$bgreen[DBG]$reset $@"
+  fi
+}
+function dbg2() {
+  if [[ $verbose -eq 1 ]]; then
+    echo -e "$byellow[DBG]$reset $@"
+  fi
+}
+function dbgc() {
+  if [[ $verbose -eq 1 ]]; then
+    echo -e "$bblue[RUN]$reset $@"
+  fi
+  $@
+}
+
+default_version=@IMAGE_TAG@
+version=$default_version
+mnt=$HOME
+verbose=1
+privileged=0
+ACTION=shell
+cwd=$(pwd)
 uid=$(id -u)
-uname=flow # not using $(whoami) so there are no collisions with $HOME
+gid=$(id -g)
+uname=flow
 
-# env variables which will be passed as well
-envarg="-euid=$uid -egid=$git -ewho=$uname -ehome=/mnt/$HOME -v $HOME:/mnt/$HOME"
+# define usage
+function usage() {
+  cat << EOF
+usage: flow123d [--help] [--privileged] [--version <VERSION>] [--mount <MOUNT>] [--workdir <WORKDIR>] [<ACTION>] [<args>]
+Where ACTION can be:
+  shell                 (default behaviour) Enter interactive shell
+  run                   Execute flow123d and pass all given arguments
+  help                  Print this message and exits
+
+  -v, --version <VERSION>
+      Version which will be used, default value is ${bblue}$default_version${reset}
+
+  -m, --mount <MOUNT>
+      A directory which will be mounted (files will be accessible),
+        default value taken from variable ${bgreen}\$HOME${reset}
+        which currently is                ${bblue}$mnt${reset}
+
+  -w, --workdir <WORKDIR>
+      A working directory, default value is current working directory,
+        which currently is                ${bblue}$cwd${reset}
+
+  -p, --privileged ${reset}
+      Will add --privileged=true when starting docker container,
+      this options carries a security risk but should deal with SELinux mounting
+      issues
+
+  <args>
+      Additional arguments which are passed to the flow123d (in case ACTION is run)
+      otherwise passed to the docker run
+
+  -h, --help
+      Print this message and exits
+EOF
+}
+
+while [[ $# -gt 0 ]]
+do
+  key="$1"
+
+  case $key in
+      -h|--help)
+        usage
+        exit 0
+      ;;
+      -m|--mount)
+        mnt="$2"
+        shift # past argument
+        shift # past value
+      ;;
+      -w|--workdir)
+        cwd="$2"
+        shift # past argument
+        shift # past value
+      ;;
+      -v|--version)
+        version="$2"
+        shift # past argument
+        shift # past value
+      ;;
+      -p|--privileged)
+        privileged=1
+        shift
+      ;;
+      run|shell|exec)
+        ACTION="$1"
+        shift # past argument
+        
+        # in case someone did the fterm run -- <args>
+        # we strip the first double dashes
+        if [[ "$1" == "--" ]]; then
+          shift
+        fi
+        break
+      ;;
+      *)
+        break
+      ;;
+  esac
+done
 
 
-# if no argument was supplied open shell
-if [ -z "$1" ]
-  then
-    docker run -ti --rm -v "/$HOME:/$HOME" $EXTRA_MOUNT -w "/$(pwd)" "@IMAGE_TAG@" bash -l
-else
-    echo "Executing $@"
-    if [[ "$1" == "--" ]]; then
-      # special case for GeoMop application
-      # fterm.sh -- -di /foo/bar
-      FLAGS=$2
-      WORKDIR=$3
-      shift; shift; shift
-      docker run $FLAGS -v "/$HOME:/$HOME" $EXTRA_MOUNT -w "/$WORKDIR" "@IMAGE_TAG@" "$@"
-      exit $?
-    else
-      docker run --rm -ti $envarg -v "/$HOME:/$HOME" $EXTRA_MOUNT -w "/$(pwd)" "@IMAGE_TAG@" "$@"
-    fi
+if [[ "$ACTION" == "help" ]]; then
+  usage
+  exit 0
 fi
 
-# check exit code
-# if we detect error, we exit console
-# only after user preses enter (user thus can see error messages or output)
-RC=$?
-if [ $RC -ne 0 ]; then
-    echo -e "\n\n\n"
-    echo "Command failed (exit code: $RC)"
-    read -p "Press enter to exit"
+if [[ $privileged == "1" ]]; then
+  priv_true="--privileged=true"
 fi
+
+
+flags="-e uid=$uid -e gid=$gid -ewho=$uname -v $mnt:$mnt -w $cwd $priv_true"
+
+
+if [[ "$ACTION" == "shell" ]]; then
+  dbgc docker run -ti --rm $flags flow123d/$version
+
+elif [[ "$ACTION" == "run" ]]; then
+  dbgc docker run -ti --rm $flags flow123d/$version flow123d "$@"
+
+elif [[ "$ACTION" == "exec" ]]; then
+  dbgc docker run -ti --rm $flags flow123d/$version "$@"
+fi
+
+exit $?
