@@ -39,11 +39,10 @@ function dbgc() {
   $@
 }
 
-default_version=@IMAGE_TAG@
-if [[ -z "$default_version" ]]; then
-  version=$default_version
-else
-  version=3.0.1
+version=@IMAGE_TAG@
+if [[ -z "$version" ]]; then
+    echo -e "$byellow no docker image version specified$reset"
+    exit 1
 fi
 
 mnt=$(pwd)
@@ -54,6 +53,8 @@ cwd=$(pwd)
 uid=$(id -u)
 gid=$(id -g)
 uname=flow
+tty="true"
+interactive="true"
 
 # define usage
 function usage() {
@@ -70,16 +71,24 @@ Where ACTION can be:
   -m, --mount <MOUNT>
       A directory which will be mounted (files thus will be accessible),
         default value is a current directory ${bgreen}\`pwd\`${reset}
-        currently value                ${bblue}$mnt${reset}
+        current value              ${bblue}$mnt${reset}
 
   -w, --workdir <WORKDIR>
       A working directory, default value is current working directory,
-        currently value                ${bblue}$cwd${reset}
+        current value              ${bblue}$cwd${reset}
 
   -p, --privileged ${reset}
       Will add --privileged=true when starting docker container,
       this options carries a security risk but should deal with SELinux mounting
       issues
+
+  --tty true|false ${reset}
+      Will set tty mode if true non-tty or false
+      current value                ${bblue}--tty $tty${reset}
+
+  --interactive true|false ${reset}
+      Will set interactive mode if true non-interactive or false
+      current value                ${bblue}--interactive $interactive${reset}
 
   <args>
       Additional arguments which are passed to the flow123d (in case ACTION is run)
@@ -118,6 +127,16 @@ do
         privileged=1
         shift
       ;;
+      --tty)
+        tty="$2"
+        shift
+        shift
+      ;;
+     --interactive)
+        interactive="$2"
+        shift
+        shift
+      ;;
       run|shell|exec)
         ACTION="$1"
         shift # past argument
@@ -135,6 +154,9 @@ do
   esac
 done
 
+# remove flow123d prefix
+final_version=${version#flow123d/}
+
 
 if [[ $privileged == "1" ]]; then
   priv_true="--privileged=true"
@@ -145,13 +167,13 @@ flags="-e uid=$uid -e gid=$gid -ewho=$uname -v $mnt:$mnt -w $cwd $priv_true"
 
 
 if [[ "$ACTION" == "shell" ]]; then
-  dbgc docker run -ti --rm $flags flow123d/$version
+  dbgc docker run --tty=$tty --interactive=$interactive --rm $flags flow123d/$final_version
 
 elif [[ "$ACTION" == "run" ]]; then
-  dbgc docker run -ti --rm $flags flow123d/$version flow123d "$@"
+  dbgc docker run --tty=$tty --interactive=$interactive --rm $flags flow123d/$final_version flow123d "$@"
 
 elif [[ "$ACTION" == "exec" ]]; then
-  dbgc docker run -ti --rm $flags flow123d/$version "$@"
+  dbgc docker run --tty=$tty --interactive=$interactive --rm $flags flow123d/$final_version "$@"
 fi
 
 exit $?
