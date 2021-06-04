@@ -116,11 +116,22 @@ Function COPY_FILES
     FileWrite $0 'docker run -ti --rm -v "%L%:\:/%L%/" -v "c:\:/c/" -w "%cdir:\=/%" flow123d/${VERSION} flow123d %*$\r$\n'
   FileClose $0
 
+  # In some cases when executing flow123d from other process we need to start docker without terminal in non-interactive mode.
+  # flow-noterm.bat serves this purpose:
+  FileOpen $0 "flow-noterm.bat" w
+    FileWrite $0 '@echo off$\r$\n'
+    FileWrite $0 'SET cdir=\%CD:~0,1%\%CD:~3,256%$\r$\n'
+    FileWrite $0 'SET L=%CD:~0,1%$\r$\n'
+    FileWrite $0 'docker run --rm -v "%L%:\:/%L%/" -v "c:\:/c/" -w "%cdir:\=/%" flow123d/${VERSION} flow123d %*$\r$\n'
+  FileClose $0
+
   # fterm and flow123d with version
   CopyFiles "fterm.bat"     "fterm-${VERSION}.bat"
   CopyFiles "flow123d.bat"  "flow123d-${VERSION}.bat"
   CopyFiles "flow123d.bat"  "flow.bat"
-  CopyFiles "flow123d.bat"  "flow-${VERSION}.bat"
+  CopyFiles "flow123d.bat"  "flow-${VERSION}.bat"  
+  CopyFiles "flow-noterm.bat"  "flow-noterm-${VERSION}.bat"
+
 FunctionEnd
 
 
